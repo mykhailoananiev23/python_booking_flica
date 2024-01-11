@@ -1,0 +1,98 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
+import time
+
+def log_in(driver, username, password):
+    url = 'https://frontier.flica.net/ui/public/login/index.html'
+    driver.get(url)
+    
+    wait = WebDriverWait(driver, 3)
+    username_field = wait.until(EC.presence_of_element_located((By.NAME, 'UserId')))
+    username_field.send_keys(username)
+    
+    password_field = driver.find_element(By.NAME, 'Password')
+    password_field.send_keys(password)
+    
+    remember_me = driver.find_element(By.NAME, 'RememberMe')
+    driver.execute_script("arguments[0].click()", remember_me)
+    
+    submit = wait.until(EC.element_to_be_clickable((By.XPATH, '//button[@type="submit"]')))
+    submit.click()
+
+def log_out(driver):
+    driver.switch_to.default_content()
+    wait = WebDriverWait(driver, 3)
+    
+    try:
+        sign_out = wait.until(EC.element_to_be_clickable((By.XPATH, '(//a[@id="logoutBtn"])[1]')))
+        driver.execute_script("arguments[0].click()", sign_out)
+    except TimeoutException:
+        print("Timed out waiting for logout button. Exiting...")
+    except NoSuchElementException:
+        print("Logout button not found. Exiting...")
+
+def pilot_daily_opentime_live_ca(driver, is_enabled):
+    if not is_enabled:
+        return
+    
+    pilot_daily_opentime_live_ca_url = 'https://frontier.flica.net/full/otframe.cgi?BCID=018.000'
+    
+    while True:
+        try:
+            driver.get(pilot_daily_opentime_live_ca_url)
+            wait = WebDriverWait(driver, 3)
+
+            # Click the "Add" button
+            iframe_switch = wait.until(EC.frame_to_be_available_and_switch_to_it((By.ID, 'MainFrame')))
+            click_add = wait.until(EC.element_to_be_clickable((By.ID, 'btnAdd')))
+            driver.execute_script("arguments[0].click()", click_add)
+
+            # Select the "Yes" radio option
+            radio_button_yes = wait.until(EC.element_to_be_clickable((By.XPATH, '//input[@type="radio" and @name="radSplit" and @onclick="radSplitClick(0)"]')))
+            radio_button_yes.click()
+
+            # Standard element interaction logic
+            _adds = wait.until(EC.element_to_be_clickable((By.ID, 'btnAdd')))
+            _adds.click()
+            submit_request = wait.until(EC.element_to_be_clickable((By.XPATH, '//input[@value="Submit Request"]')))
+            submit_request.click()
+
+            time.sleep(3)  # Adjust time as needed for refresh loop
+
+        except StaleElementReferenceException:
+            print("Stale Element Reference Exception. Retrying...")
+            continue
+        except Exception as e:
+            print(f"Error encountered: {str(e)}")
+            print("Retrying...")
+            continue
+
+def main():
+    username = 'fft425207'
+    password = 'Flica2023!'
+    is_enabled = True
+    
+    options = Options()
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-infobars")
+    options.add_argument("--disable-animations")
+    
+    driver = webdriver.Chrome(options=options)
+    try:
+        log_in(driver, username, password)
+        pilot_daily_opentime_live_ca(driver, is_enabled)
+    except Exception as e:
+        print(f"Error in main: {str(e)}")
+    finally:
+        log_out(driver)
+        driver.quit()
+
+if __name__ == "__main__":
+    main()
