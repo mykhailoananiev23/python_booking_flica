@@ -130,13 +130,13 @@ def pilot_daily_opentime_live_ca(driver, is_enabled):
                                     break
                                 elif cond_opt["End_Arrive"] != "" and from_str_to_time(cond_opt["End_Arrive"]) < from_str_to_time(_arrive):
                                     break
-                                elif cond_opt["Start_Report"] != "" and cond_opt["Start_Report"] > _report:
+                                elif cond_opt["Start_Report"] != "" and from_str_to_time(cond_opt["Start_Report"]) > from_str_to_time(_report):
                                     break
-                                elif cond_opt["End_Report"] != "" and cond_opt["End_Report"] < _report:
+                                elif cond_opt["End_Report"] != "" and from_str_to_time(cond_opt["End_Report"]) < from_str_to_time(_report):
                                     break
-                                elif cond_opt["Days"] < _days:
+                                elif int(cond_opt["Days"]) < int(_days):
                                     break
-                                elif cond_opt["Credit"] < _credit:
+                                elif int(cond_opt["Credit"]) < int(_credit):
                                     break
                                 else:
                                     print(f'Pairing: {_pairing}, Dates: {_dates}, Days: {_days}, Report: {_report}, Depart: {_depart}, Arrive: {_arrive}, Credit: {_credit}')
@@ -144,8 +144,8 @@ def pilot_daily_opentime_live_ca(driver, is_enabled):
                                     _adds = td_items[0].find_element(By.ID, 'btnAdd')
                                     _adds.click()
                                     # Assuming you want to submit the request after clicking the "Add" button
-                                    submit_request = driver.find_element(By.XPATH, '//input[@value="Submit Request"]')
-                                    submit_request.click()
+                                    # submit_request = driver.find_element(By.XPATH, '//input[@value="Submit Request"]')
+                                    # submit_request.click()
                                     break
                             else:
                                 break
@@ -161,14 +161,14 @@ def pilot_daily_opentime_live_ca(driver, is_enabled):
                     break  # Break out of the loop and retry the entire process
 
                 except Exception as e:
-                    reg_log(f"Error: No Opentime")
+                    reg_log(f"Error: {e}")
                     reg_log("Retrying...\n")
                     break  # Break out of the loop and retry the entire process
 
         except Exception as e:
             reg_log(f"Error: {str(e)}")
-            reg_log("Restarting the script...\n")
-            continue  # Restart the script in case of an exception
+            reg_log("pilot_daily_opentime_live_ca Error! \n Restarting the script...\n")
+            break  # Restart the script in case of an exception
 
 def main():
     username = 'fft425207'
@@ -183,7 +183,7 @@ def main():
 
     reg_log("\n Scripting Start!\n")
     
-    retry_limit = 35
+    retry_limit = 5
     retry_count = 0
 
     while retry_count < retry_limit:
@@ -197,13 +197,13 @@ def main():
         
         except NoSuchElementException as e:
             reg_log(f"Element not found: {str(e)}")
-            reg_log("Restarting the script...")
+            reg_log("No Such Element Exception. Restarting the script...")
             retry_count += 1
             continue
         
         except Exception as e:
             reg_log(f"Error: {str(e)}")
-            reg_log("Restarting the script...")
+            reg_log("Error: {e} \n Restarting the script...")
             retry_count += 1
             continue
         
