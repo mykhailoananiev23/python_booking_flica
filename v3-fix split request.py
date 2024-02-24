@@ -17,12 +17,14 @@ alreadyBookedOptions = []
 cond_opt = {
     "Start_Dates":"20FEB",
     "End_Dates":"05MAR", # JAN, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OPT, NOV, DEC
-    "Days": 5,
+    "Start_Days": 0,
+    "End_Days": 5,
     "Start_Report": "00:00",
     "End_Report": "23:59",
     "Start_Arrive": "00:00",
     "End_Arrive": "23:59",
-    "Credit": 2000
+    "Start_Credit": 0,
+    "End_Credit": 2000
 }
 
 
@@ -84,8 +86,7 @@ def pilot_daily_opentime_live_ca(driver, is_enabled):
     if not is_enabled:
         return
     
-    pilot_daily_opentime_live_ca_url = 'https://frontier.flica.net/full/otframe.cgi?BCID=004.225'
-    # pilot_daily_opentime_live_ca_url = 'https://frontier.flica.net/full/otframe.cgi?BCID=005.224'
+    pilot_daily_opentime_live_ca_url = 'https://frontier.flica.net/full/otframe.cgi?BCID=018.000'
     
     driver.get(pilot_daily_opentime_live_ca_url)
     
@@ -94,6 +95,9 @@ def pilot_daily_opentime_live_ca(driver, is_enabled):
 
     click_add = wait.until(EC.element_to_be_clickable((By.ID, 'btnAdd')))
     driver.execute_script("arguments[0].click()", click_add)
+
+    separate_btn = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@name='radSplit' and @onclick='radSplitClick(0)']")))
+    separate_btn.click()
 
     while True:
         try:
@@ -104,8 +108,9 @@ def pilot_daily_opentime_live_ca(driver, is_enabled):
             while True:
                 try:
                     items_to_add = wait.until(EC.presence_of_all_elements_located((By.XPATH, '//table[@class="otpottable"]//tr[@bgcolor="WHITE"]')))
-
+                
                     if items_to_add is not None:
+                        print(len(items_to_add))
                         for item in items_to_add:
                             td_items = item.find_elements(By.TAG_NAME, 'td')
 
@@ -121,34 +126,40 @@ def pilot_daily_opentime_live_ca(driver, is_enabled):
                             cur_book_time = f"{_pairing}:{_date}"
 
                             if cur_book_time not in alreadyBookedOptions:
+                                print(cur_book_time)
                                 alreadyBookedOptions.append(cur_book_time)
-                                if cond_opt["Start_Dates"] != "" and from_str_to_date(cond_opt["Start_Dates"]) > from_str_to_date(_date):
-                                    break
-                                elif cond_opt["End_Dates"] != "" and from_str_to_date(cond_opt["End_Dates"]) < from_str_to_date(_date):
-                                    break
-                                elif cond_opt["Start_Arrive"] != "" and from_str_to_time(cond_opt["Start_Arrive"]) > from_str_to_time(_arrive):
-                                    break
-                                elif cond_opt["End_Arrive"] != "" and from_str_to_time(cond_opt["End_Arrive"]) < from_str_to_time(_arrive):
-                                    break
-                                elif cond_opt["Start_Report"] != "" and from_str_to_time(cond_opt["Start_Report"]) > from_str_to_time(_report):
-                                    break
-                                elif cond_opt["End_Report"] != "" and from_str_to_time(cond_opt["End_Report"]) < from_str_to_time(_report):
-                                    break
-                                elif int(cond_opt["Days"]) < int(_days):
-                                    break
-                                elif int(cond_opt["Credit"]) < int(_credit):
-                                    break
+                                if cond_opt["Start_Dates"] is not None and cond_opt["Start_Dates"] != "" and from_str_to_date(cond_opt["Start_Dates"]) > from_str_to_date(_date):
+                                    continue
+                                elif cond_opt["Start_Dates"] is not None and cond_opt["End_Dates"] != "" and from_str_to_date(cond_opt["End_Dates"]) < from_str_to_date(_date):
+                                    continue
+                                elif cond_opt["Start_Arrive"] is not None and cond_opt["Start_Arrive"] != "" and from_str_to_time(cond_opt["Start_Arrive"]) > from_str_to_time(_arrive):
+                                    continue
+                                elif cond_opt["End_Arrive"] is not None and cond_opt["End_Arrive"] != "" and from_str_to_time(cond_opt["End_Arrive"]) < from_str_to_time(_arrive):
+                                    continue
+                                elif cond_opt["Start_Report"] is not None and cond_opt["Start_Report"] != "" and from_str_to_time(cond_opt["Start_Report"]) > from_str_to_time(_report):
+                                    continue
+                                elif cond_opt["End_Report"] is not None and cond_opt["End_Report"] != "" and from_str_to_time(cond_opt["End_Report"]) < from_str_to_time(_report):
+                                    continue
+                                elif cond_opt["Start_Days"] is not None and int(cond_opt["Start_Days"]) > int(_days):
+                                    continue
+                                elif cond_opt["End_Days"] is not None and int(cond_opt["End_Days"]) < int(_days):
+                                    continue
+                                elif cond_opt["Start_Credit"] is not None and int(cond_opt["Start_Credit"]) > int(_credit):
+                                    continue
+                                elif cond_opt["End_Credit"] is not None and int(cond_opt["End_Credit"]) < int(_credit):
+                                    continue
                                 else:
                                     print(f'Pairing: {_pairing}, Dates: {_dates}, Days: {_days}, Report: {_report}, Depart: {_depart}, Arrive: {_arrive}, Credit: {_credit}')
                                     reg_log(f"Add booked option to cache - {_pairing}:{_date}")
                                     _adds = td_items[0].find_element(By.ID, 'btnAdd')
                                     _adds.click()
-                                    # Assuming you want to submit the request after clicking the "Add" button
-                                    # submit_request = driver.find_element(By.XPATH, '//input[@value="Submit Request"]')
-                                    # submit_request.click()
-                                    break
+                                    continue
                             else:
-                                break
+                                continue
+
+                        # Assuming you want to submit the request after clicking the "Add" button
+                        # submit_request = driver.find_element(By.XPATH, '//input[@value="Submit Request"]')
+                        # submit_request.click()
                             
                         break  # Exit the loop after interacting with a new element
                     else:
